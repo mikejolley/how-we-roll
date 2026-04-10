@@ -16,10 +16,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Same environment as deploy so **environment** secrets (e.g. under github-pages) are visible
-    # during `npm run build`. Repository secrets are also available here.
-    environment:
-      name: github-pages
     steps:
       - uses: actions/checkout@v4
 
@@ -34,7 +30,7 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
         run: |
           if [ -z "${VITE_SUPABASE_URL}" ] || [ -z "${VITE_SUPABASE_PUBLISHABLE_KEY}" ]; then
-            echo "::error::VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY must be set for the build (repository Actions secrets and/or github-pages environment secrets). Empty values produce a broken site."
+            echo "::error::VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY must be set as repository Actions secrets (Settings → Secrets → Actions). Jobs that use the github-pages environment resolve environment secrets first — duplicate empty keys there override repository secrets and produce an empty Vite build."
             exit 1
           fi
 

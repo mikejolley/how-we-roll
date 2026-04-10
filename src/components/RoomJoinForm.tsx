@@ -313,10 +313,10 @@ export function RoomJoinForm({ initialSlug = "" }: RoomJoinFormProps) {
         <p className="tiny warning">
           {import.meta.env.PROD ? (
             <>
-              Supabase env missing in this deployment. Configure{" "}
-              <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> for the
-              GitHub Actions build (repository or <code>github-pages</code> environment secrets) and
-              redeploy.
+              Supabase env missing in this deployment. Set{" "}
+              <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> as
+              repository Actions secrets and redeploy. Remove or fix duplicate empty keys on the{" "}
+              <code>github-pages</code> environment — they can override repository secrets.
             </>
           ) : (
             <>
