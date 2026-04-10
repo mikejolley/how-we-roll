@@ -145,14 +145,13 @@ const readSavedIdentity = (roomSlug: string) => {
 
 export function SpectrumBoard({ roomSlug }: SpectrumBoardProps) {
   const initialIdentity = readSavedIdentity(roomSlug);
-  const [{ client: supabase, initError: supabaseInitError }] = useState(() => {
+  const supabase = useMemo(() => {
     try {
-      return { client: getSupabaseClient(), initError: null as string | null };
-    } catch (unknownError) {
-      const message = unknownError instanceof Error ? unknownError.message : String(unknownError);
-      return { client: null, initError: message };
+      return getSupabaseClient();
+    } catch {
+      return null;
     }
-  });
+  }, []);
   const [roomId, setRoomId] = useState<string | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [responses, setResponses] = useState<ResponseMap>({});
@@ -467,27 +466,7 @@ export function SpectrumBoard({ roomSlug }: SpectrumBoardProps) {
       <main className="centeredPage">
         <section className="card">
           <h1>Supabase setup required</h1>
-          <p className="muted">
-            {import.meta.env.PROD ? (
-              <>
-                This build was produced without usable Supabase settings. Add repository secrets{" "}
-                <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>, then
-                re-run the deploy workflow. If you use the <code>github-pages</code> environment for
-                secrets too, ensure those values are not empty — they override repository secrets for
-                jobs attached to that environment.
-              </>
-            ) : (
-              <>
-                Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> to{" "}
-                <code>.env.local</code>, then reload.
-              </>
-            )}
-          </p>
-          {supabaseInitError ? (
-            <p className="muted tiny">
-              <strong>Details:</strong> {supabaseInitError}
-            </p>
-          ) : null}
+          <p className="muted">This build is missing Supabase configuration.</p>
         </section>
       </main>
     );

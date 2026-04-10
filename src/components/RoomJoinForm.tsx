@@ -309,24 +309,7 @@ export function RoomJoinForm({ initialSlug = "" }: RoomJoinFormProps) {
           </button>
         </p>
       ) : null}
-      {supabaseUnavailable ? (
-        <p className="tiny warning">
-          {import.meta.env.PROD ? (
-            <>
-              Supabase env missing in this deployment. Set{" "}
-              <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> as
-              repository Actions secrets and redeploy. Remove or fix duplicate empty keys on the{" "}
-              <code>github-pages</code> environment — they can override repository secrets.
-            </>
-          ) : (
-            <>
-              Supabase setup missing. Add <code>VITE_SUPABASE_URL</code> and{" "}
-              <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> in <code>.env.local</code>, then restart{" "}
-              <code>npm run dev</code>.
-            </>
-          )}
-        </p>
-      ) : null}
+      {supabaseUnavailable ? <p className="tiny warning">Supabase is not configured.</p> : null}
       <label className="fieldLabel" htmlFor="roomSlug">
         Create or join a room to start plotting your team.
       </label>

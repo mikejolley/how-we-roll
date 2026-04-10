@@ -48,8 +48,7 @@ This app uses `HashRouter`, so routes work on static hosting without rewrite rul
 ### Automated deploy (recommended)
 
 1. In the GitHub repo, go to **Settings → Pages** and set **Source** to **GitHub Actions**.
-2. Add **`VITE_SUPABASE_URL`** and **`VITE_SUPABASE_PUBLISHABLE_KEY`** as **repository** Actions secrets (**Settings → Secrets and variables → Actions**, not “Dependabot”). Vite reads them only during `npm run build` in CI.  
-   **Important:** If you also create secrets with the **same names** on the **`github-pages` environment**, those values **override** repository secrets for any job that uses that environment. Empty or placeholder environment secrets will break the build even when repository secrets are correct. The Pages deploy workflow keeps the build job **off** that environment so your repository secrets stay authoritative.
+2. Under **Settings → Secrets and variables → Actions**, add **repository secrets** named **`VITE_SUPABASE_URL`** and **`VITE_SUPABASE_PUBLISHABLE_KEY`** (this workflow passes them into `npm run build`). Use **Secrets**, not **Variables**: the workflow reads `${{ secrets.* }}`, and secrets are masked in logs. You *could* use Variables plus a workflow change (`vars.*`), but there is no benefit here. Duplicate **environment** secrets with the same names can override repository secrets for jobs attached to that environment — avoid empty duplicates.
 3. Push to `main`; `.github/workflows/deploy-pages.yml` builds `dist/` and publishes it.
 
 ### Manual build
