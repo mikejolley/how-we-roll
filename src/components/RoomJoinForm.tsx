@@ -9,6 +9,7 @@ import {
   normalizeRoomSlug,
 } from "../lib/supabase";
 import { AsciiTitle } from "./AsciiTitle";
+import { getOAuthRedirectUrl } from "../oauthCallback";
 
 type RoomJoinFormProps = {
   initialSlug?: string;
@@ -167,7 +168,7 @@ export function RoomJoinForm({ initialSlug = "" }: RoomJoinFormProps) {
     const supabase = getSupabaseClient();
     setErrorMessage("");
 
-    const redirectTo = `${window.location.origin}/`;
+    const redirectTo = getOAuthRedirectUrl();
 
     await supabase.auth.signInWithOAuth({
       provider: "github",
