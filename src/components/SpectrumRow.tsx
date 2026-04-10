@@ -19,8 +19,18 @@ type SpectrumRowProps = {
   onSliderRelease: (questionId: string, value: number) => void;
 };
 
+type MarkerEntry = { participant: Participant; value: number };
+
 const MARKER_PX = 40;
 const MARKER_RADIUS_PX = MARKER_PX / 2;
+
+/** Horizontal position along the scale track for a 0–100 value (markers and tick dots). */
+function scaleTrackLeft(percent: number): string {
+  return `calc(${MARKER_RADIUS_PX}px + (100% - ${MARKER_PX}px) * ${percent / 100})`;
+}
+
+/** Tick positions 0, 5, …, 100 (aligned with slider step). */
+const SCALE_DOT_PERCENTAGES = Array.from({ length: 21 }, (_, index) => index * 5);
 
 type MarkerProps = {
   participant: Participant;
@@ -74,7 +84,7 @@ function AnimatedMarker({
     <span
       className="marker"
       style={{
-        left: `calc(${MARKER_RADIUS_PX}px + (100% - ${MARKER_PX}px) * ${v / 100})`,
+        left: scaleTrackLeft(v),
         top: `calc(50% + ${displayOffsetY}px)`,
         zIndex: stackCount + stackIndex,
       }}
@@ -142,59 +152,67 @@ export function SpectrumRow({
     }
   }, [rowKey, currentParticipantId, question.id, responses]);
 
-  const schedulePersist = useCallback((value: number) => {
-    pendingPersistValueRef.current = value;
+  const clearPersistTimer = useCallback(() => {
     if (persistTimerRef.current !== null) {
       window.clearTimeout(persistTimerRef.current);
-    }
-    persistTimerRef.current = window.setTimeout(() => {
       persistTimerRef.current = null;
-      onPersistRef.current(question.id, pendingPersistValueRef.current);
-    }, SLIDER_PERSIST_DEBOUNCE_MS);
-  }, [question.id]);
+    }
+  }, []);
+
+  const schedulePersist = useCallback(
+    (value: number) => {
+      pendingPersistValueRef.current = value;
+      clearPersistTimer();
+      persistTimerRef.current = window.setTimeout(() => {
+        persistTimerRef.current = null;
+        onPersistRef.current(question.id, pendingPersistValueRef.current);
+      }, SLIDER_PERSIST_DEBOUNCE_MS);
+    },
+    [clearPersistTimer, question.id],
+  );
 
   const flushPersist = useCallback(() => {
-    if (persistTimerRef.current !== null) {
-      window.clearTimeout(persistTimerRef.current);
-      persistTimerRef.current = null;
-    }
+    clearPersistTimer();
     onPersistRef.current(question.id, pendingPersistValueRef.current);
-  }, [question.id]);
+  }, [clearPersistTimer, question.id]);
 
-  useEffect(
-    () => () => {
-      if (persistTimerRef.current !== null) {
-        window.clearTimeout(persistTimerRef.current);
-        persistTimerRef.current = null;
-      }
-    },
-    [],
-  );
+  useEffect(() => () => clearPersistTimer(), [clearPersistTimer]);
 
   const responseRow = responses[question.id] ?? {};
 
-  const markerRows = participants
-    .map((participant) => {
-      const remote = responseRow[participant.id] ?? 50;
-      const value =
-        currentParticipantId && participant.id === currentParticipantId ? localSliderValue : remote;
-      return {
-        participant,
-        value,
-      };
-    })
-    .filter((entry): entry is { participant: Participant; value: number } => Boolean(entry));
+  const markerRows: MarkerEntry[] = participants.map((participant) => {
+    const remote = responseRow[participant.id] ?? 50;
+    const value =
+      currentParticipantId && participant.id === currentParticipantId ? localSliderValue : remote;
+    return { participant, value };
+  });
+
+  const sortSameValueStack = (a: MarkerEntry, b: MarkerEntry) => {
+    const aIsCurrent = a.participant.id === currentParticipantId;
+    const bIsCurrent = b.participant.id === currentParticipantId;
+    if (aIsCurrent === bIsCurrent) {
+      return a.participant.id.localeCompare(b.participant.id);
+    }
+    return aIsCurrent ? 1 : -1;
+  };
+
+  const rowsByValue = new Map<number, MarkerEntry[]>();
+  for (const row of markerRows) {
+    const bucket = rowsByValue.get(row.value);
+    if (bucket) {
+      bucket.push(row);
+    } else {
+      rowsByValue.set(row.value, [row]);
+    }
+  }
+
+  const orderedByValue = new Map<number, MarkerEntry[]>();
+  for (const [value, bucket] of rowsByValue) {
+    orderedByValue.set(value, [...bucket].sort(sortSameValueStack));
+  }
 
   const markerLayout = markerRows.map((entry) => {
-    const sameValue = markerRows.filter((row) => row.value === entry.value);
-    const orderedSameValue = [...sameValue].sort((a, b) => {
-      const aIsCurrent = a.participant.id === currentParticipantId;
-      const bIsCurrent = b.participant.id === currentParticipantId;
-      if (aIsCurrent === bIsCurrent) {
-        return a.participant.id.localeCompare(b.participant.id);
-      }
-      return aIsCurrent ? 1 : -1;
-    });
+    const orderedSameValue = orderedByValue.get(entry.value) ?? [entry];
     const stackIndex = orderedSameValue.findIndex((row) => row.participant.id === entry.participant.id);
     const centeredOffset = (stackIndex - (orderedSameValue.length - 1) / 2) * 10;
     const isCurrentParticipant = entry.participant.id === currentParticipantId;
@@ -214,6 +232,28 @@ export function SpectrumRow({
     setLocalSliderValue(value);
   };
 
+  const scaleDots = SCALE_DOT_PERCENTAGES.map((pct) => (
+    <span key={pct} className="scaleDot" style={{ left: scaleTrackLeft(pct) }} aria-hidden />
+  ));
+
+  const scaleTrack = (
+    <div className="scaleWrap" role="img" aria-label={`Scale for ${question.title}`}>
+      <div className="scaleTrack">
+        {scaleDots}
+        {markerLayout.map(({ participant, value, stackCount, offsetY, zOrder }) => (
+          <AnimatedMarker
+            key={`${question.id}-${participant.id}`}
+            participant={participant}
+            value={value}
+            offsetY={offsetY}
+            stackIndex={zOrder}
+            stackCount={stackCount}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
   return (
     <article className="questionRow">
       <header className="questionRowHeading">
@@ -223,30 +263,24 @@ export function SpectrumRow({
         </h3>
       </header>
 
-      <div className="trackStrip">
-        <div className="scaleWrap" role="img" aria-label={`Scale for ${question.title}`}>
-          <div className="scaleTrack">
-            {markerLayout.map(({ participant, value, stackCount, offsetY, zOrder }) => (
-              <AnimatedMarker
-                key={`${question.id}-${participant.id}`}
-                participant={participant}
-                value={value}
-                offsetY={offsetY}
-                stackIndex={zOrder}
-                stackCount={stackCount}
-              />
-            ))}
-          </div>
+      {presentationMode ? (
+        <div className="presentationSpectrumLine">
+          <span className="spectrumEndLabel spectrumEndLabelStart">{question.leftLabel}</span>
+          <div className="trackStrip presentationTrackCell">{scaleTrack}</div>
+          <span className="spectrumEndLabel spectrumEndLabelEnd">{question.rightLabel}</span>
         </div>
-      </div>
-
-      <p className="spectrumLabels spectrumLabelsBelowTrack">
-        <span>{question.leftLabel}</span>
-        <span className="spectrumArrow" aria-hidden>
-          ↔
-        </span>
-        <span>{question.rightLabel}</span>
-      </p>
+      ) : (
+        <>
+          <div className="trackStrip">{scaleTrack}</div>
+          <p className="spectrumLabels spectrumLabelsBelowTrack">
+            <span>{question.leftLabel}</span>
+            <span className="spectrumArrow" aria-hidden>
+              ↔
+            </span>
+            <span>{question.rightLabel}</span>
+          </p>
+        </>
+      )}
 
       {!presentationMode && canRespond ? (
         <label className="sliderLabel" htmlFor={`spectrum-slider-${question.id}`}>

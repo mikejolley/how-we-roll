@@ -12,6 +12,9 @@
   --muted: #9fb0bf;
   --text: #e6edf3;
   --danger: #ff6b6b;
+  --success: #59d185;
+  /* Same wash as `.identityCallout` (spectrum dots, etc.) */
+  --identity-callout-bg: rgb(51 153 204 / 14%);
 }
 
 * {
@@ -71,13 +74,40 @@ h3 {
 .asciiTitle {
   margin: 0;
   white-space: pre;
-  overflow-x: auto;
+  overflow: hidden;
+  max-width: 100%;
+  min-width: 0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: clamp(0.47rem, 1.22vw, 0.72rem);
   line-height: 1.04;
   letter-spacing: 0.01em;
   color: #6ec4ea;
   text-shadow: 0 0 8px rgb(51 153 204 / 22%);
+}
+
+/* Section banner (Extra Spectrums); slightly under main title; box is `.asciiSectionBox` */
+.asciiTitleSection {
+  font-size: clamp(0.46rem, 7.25cqi, 0.78rem);
+  line-height: 1.08;
+  text-align: center;
+  margin-inline: auto;
+}
+
+@supports not (font-size: 1cqi) {
+  .asciiTitleSection {
+    font-size: clamp(0.46rem, 1.45vw, 0.78rem);
+  }
+}
+
+.asciiSectionBox {
+  container-type: inline-size;
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.85rem;
+  border-left: 3px solid #58b9ea;
+  border-radius: 6px;
+  background: var(--identity-callout-bg);
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 .roomJoinForm {
@@ -173,7 +203,7 @@ h3 {
 }
 
 .success {
-  color: #59d185;
+  color: var(--success);
 }
 
 .subheading {
@@ -327,6 +357,7 @@ h3 {
 .headerCenterCluster .asciiTitle {
   display: block;
   max-width: 100%;
+  min-width: 0;
   margin-inline: auto;
   text-align: left;
 }
@@ -407,7 +438,7 @@ h3 {
   padding: 0.6rem 0.75rem;
   border-left: 3px solid #58b9ea;
   border-radius: 6px;
-  background: rgb(51 153 204 / 14%);
+  background: var(--identity-callout-bg);
   color: #7fd4ff;
   font-size: 0.93rem;
 }
@@ -450,15 +481,45 @@ h3 {
 }
 
 .trackStrip {
-  margin: 0.65rem -0.85rem 0;
-  padding: 0.35rem 0.85rem;
-  background: #0a0d14;
-  background: color-mix(in srgb, var(--question-row-surface) 72%, #000);
-  border-block: 1px solid rgb(0 0 0 / 35%);
+  margin: 0.65rem 0 0;
+  padding: 0.35rem 0;
+  background: transparent;
+  border: none;
 }
 
 .trackStrip .scaleWrap {
   padding-block: 0;
+}
+
+.presentationSpectrumLine {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 2.4fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.65rem;
+}
+
+.presentationSpectrumLine .trackStrip {
+  margin: 0;
+  padding: 0.25rem 0;
+  min-width: 0;
+}
+
+.spectrumEndLabel {
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spectrumEndLabelStart {
+  text-align: right;
+}
+
+.spectrumEndLabelEnd {
+  text-align: left;
 }
 
 .scaleWrap {
@@ -501,6 +562,20 @@ h3 {
   background: transparent;
   position: relative;
   overflow: visible;
+  border: none;
+}
+
+.scaleDot {
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--identity-callout-bg);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 0;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 32%, transparent);
 }
 
 .marker {
@@ -521,12 +596,12 @@ h3 {
   height: 100%;
   border-radius: 999px;
   border: 3px solid;
-  background: #0a0d14;
+  background: var(--question-row-surface);
   display: grid;
   place-items: center;
   font-size: 1.35rem;
   line-height: 1;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 35%);
+  box-shadow: none;
   transform-origin: 50% 50%;
   transform: scale(1) rotate(0deg);
 }

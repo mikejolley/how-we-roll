@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Tooltip } from "react-tooltip";
 import "react-tooltip/dist/react-tooltip.css";
 import { AsciiTitle } from "./AsciiTitle";
+import { AsciiExtraSpectrums } from "./AsciiExtraSpectrums";
 import { ParticipantLegend } from "./ParticipantLegend";
 import { SpectrumRow } from "./SpectrumRow";
 import { EMOJI_CHOICES, QUESTIONS, SECTION_LABELS } from "../lib/questions";
@@ -104,22 +105,24 @@ const buildResponseMap = (rows: ResponseRow[]) => {
 
 const storageKey = (roomSlug: string) => `howweroll:${roomSlug}:identity`;
 
+const EMPTY_SAVED_IDENTITY = {
+  participantId: null as string | null,
+  name: "",
+  emoji: "😀",
+};
+
+function defaultSavedIdentity() {
+  return { ...EMPTY_SAVED_IDENTITY };
+}
+
 const readSavedIdentity = (roomSlug: string) => {
   if (typeof window === "undefined") {
-    return {
-      participantId: null as string | null,
-      name: "",
-      emoji: "😀",
-    };
+    return defaultSavedIdentity();
   }
 
   const savedIdentity = window.localStorage.getItem(storageKey(roomSlug));
   if (!savedIdentity) {
-    return {
-      participantId: null as string | null,
-      name: "",
-      emoji: "😀",
-    };
+    return defaultSavedIdentity();
   }
 
   try {
@@ -135,11 +138,7 @@ const readSavedIdentity = (roomSlug: string) => {
       emoji: parsed.emoji ?? "😀",
     };
   } catch {
-    return {
-      participantId: null as string | null,
-      name: "",
-      emoji: "😀",
-    };
+    return defaultSavedIdentity();
   }
 };
 
@@ -172,11 +171,8 @@ export function SpectrumBoard({ roomSlug }: SpectrumBoardProps) {
 
   useEffect(() => {
     roomIdRef.current = roomId;
-  }, [roomId]);
-
-  useEffect(() => {
     participantIdRef.current = participantId;
-  }, [participantId]);
+  }, [roomId, participantId]);
 
   useEffect(() => {
     if (!presentationMode) {
@@ -269,37 +265,39 @@ export function SpectrumBoard({ roomSlug }: SpectrumBoardProps) {
 
     void loadData();
 
+    const refreshParticipants = () => {
+      void participantsTable
+        .select("*")
+        .eq("room_id", roomId)
+        .then((result: { data: Participant[] | null; error: Error | null }) => {
+          if (!result.error) {
+            setParticipants(result.data ?? []);
+          }
+        });
+    };
+
+    const refreshResponses = () => {
+      void responsesTable
+        .select("*")
+        .eq("room_id", roomId)
+        .then((result: { data: ResponseRow[] | null; error: Error | null }) => {
+          if (!result.error) {
+            setResponses(buildResponseMap(result.data ?? []));
+          }
+        });
+    };
+
     const roomChannel = supabase
       .channel(`room-${roomId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "participants", filter: `room_id=eq.${roomId}` },
-        () => {
-          void supabase
-            .from("participants")
-            .select("*")
-            .eq("room_id", roomId)
-            .then((result: { data: Participant[] | null; error: Error | null }) => {
-              if (!result.error) {
-                setParticipants(result.data ?? []);
-              }
-            });
-        },
+        refreshParticipants,
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "responses", filter: `room_id=eq.${roomId}` },
-        () => {
-          void supabase
-            .from("responses")
-            .select("*")
-            .eq("room_id", roomId)
-            .then((result: { data: ResponseRow[] | null; error: Error | null }) => {
-              if (!result.error) {
-                setResponses(buildResponseMap(result.data ?? []));
-              }
-            });
-        },
+        refreshResponses,
       )
       .subscribe();
 
@@ -310,43 +308,43 @@ export function SpectrumBoard({ roomSlug }: SpectrumBoardProps) {
 
   const ensureParticipant = useCallback(
     async ({ showSaving = false }: { showSaving?: boolean } = {}) => {
-    if (!supabase || !roomId || !name.trim() || !emoji.trim()) {
-      return null;
-    }
+      if (!supabase || !roomId || !name.trim() || !emoji.trim()) {
+        return null;
+      }
 
-    const participantsTable = supabase.from("participants") as unknown as ParticipantsTable;
+      const participantsTable = supabase.from("participants") as unknown as ParticipantsTable;
 
       if (showSaving) {
         setSaving(true);
       }
 
-    const participantSeed = participantId ?? `${roomId}-${sessionId}-${name.trim().toLowerCase()}`;
-    const row = {
-      id: participantSeed,
-      room_id: roomId,
-      name: name.trim(),
-      emoji: emoji.trim(),
-      color: getStableColor(participantSeed),
-      session_id: sessionId,
-      updated_at: new Date().toISOString(),
-    };
+      const participantSeed = participantId ?? `${roomId}-${sessionId}-${name.trim().toLowerCase()}`;
+      const row = {
+        id: participantSeed,
+        room_id: roomId,
+        name: name.trim(),
+        emoji: emoji.trim(),
+        color: getStableColor(participantSeed),
+        session_id: sessionId,
+        updated_at: new Date().toISOString(),
+      };
 
-    const result = await participantsTable.upsert(row).select("id").single();
+      const result = await participantsTable.upsert(row).select("id").single();
       if (showSaving) {
         setSaving(false);
       }
 
-    if (result.error) {
-      throw result.error;
-    }
+      if (result.error) {
+        throw result.error;
+      }
 
-    setParticipantId(result.data.id);
-    window.localStorage.setItem(
-      storageKey(roomSlug),
-      JSON.stringify({ participantId: result.data.id, name: name.trim(), emoji: emoji.trim() }),
-    );
+      setParticipantId(result.data.id);
+      window.localStorage.setItem(
+        storageKey(roomSlug),
+        JSON.stringify({ participantId: result.data.id, name: name.trim(), emoji: emoji.trim() }),
+      );
 
-    return result.data.id;
+      return result.data.id;
     },
     [roomId, name, emoji, participantId, roomSlug, sessionId, supabase],
   );
@@ -557,7 +555,12 @@ export function SpectrumBoard({ roomSlug }: SpectrumBoardProps) {
             ) : null}
             {(["how-we-roll", "extra-spectrums"] as const).map((sectionKey) => (
               <section key={sectionKey} className="sectionBlock">
-                {sectionKey === "extra-spectrums" ? <h2>{SECTION_LABELS[sectionKey]}</h2> : null}
+                {sectionKey === "extra-spectrums" ? (
+                  <div className="asciiSectionBox">
+                    <h2 className="srOnly">{SECTION_LABELS[sectionKey]}</h2>
+                    <AsciiExtraSpectrums />
+                  </div>
+                ) : null}
                 <div className="questionList">
                   {groupedQuestions[sectionKey].map((question) => (
                     <SpectrumRow

@@ -5,17 +5,17 @@ import { getSupabaseClient } from "./lib/supabase";
  * Optional `VITE_OAUTH_REDIRECT_URL` overrides for custom domains; otherwise use origin + pathname.
  */
 export function getOAuthRedirectUrl(): string {
-  const fullOverride = import.meta.env.VITE_OAUTH_REDIRECT_URL?.trim();
-  if (fullOverride) {
-    return fullOverride.endsWith("/") ? fullOverride : `${fullOverride}/`;
+  const override = import.meta.env.VITE_OAUTH_REDIRECT_URL?.trim();
+  if (override) {
+    return override.endsWith("/") ? override : `${override}/`;
   }
 
   const { origin, pathname } = window.location;
-  let path = pathname.replace(/\/index\.html$/i, "");
-  if (path !== "/" && !path.endsWith("/")) {
-    path += "/";
+  let basePath = pathname.replace(/\/index\.html$/i, "");
+  if (basePath !== "/" && !basePath.endsWith("/")) {
+    basePath += "/";
   }
-  return `${origin}${path}`;
+  return `${origin}${basePath}`;
 }
 
 /**
@@ -44,6 +44,5 @@ export async function finishOAuthRedirectIfPresent(): Promise<void> {
 
   url.searchParams.delete("code");
   url.searchParams.delete("state");
-  const clean = `${url.pathname}${url.hash || "#/"}`;
-  window.history.replaceState({}, "", clean);
+  window.history.replaceState({}, "", `${url.pathname}${url.hash || "#/"}`);
 }

@@ -14,11 +14,11 @@ function normalizeSupabaseProjectUrl(rawUrl: string): string {
 
   // Accept host-like values from env secrets (e.g. abcdef.supabase.co) and normalize.
   const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  const withoutApiPath = withProtocol.replace(/\/rest\/v1\/?$/i, "");
+  const projectRootUrl = withProtocol.replace(/\/rest\/v1\/?$/i, "");
 
   let parsed: URL;
   try {
-    parsed = new URL(withoutApiPath);
+    parsed = new URL(projectRootUrl);
   } catch {
     throw new Error(
       "Invalid Supabase URL. Use the project URL like https://<project-ref>.supabase.co (not a relative path).",
