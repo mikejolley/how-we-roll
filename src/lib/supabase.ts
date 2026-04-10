@@ -6,6 +6,34 @@ const supabasePublishableKey =
 
 let cachedClient: ReturnType<typeof createClient> | null = null;
 
+function normalizeSupabaseProjectUrl(rawUrl: string): string {
+  const trimmed = rawUrl.trim();
+  if (!trimmed) {
+    throw new Error("Supabase URL is empty.");
+  }
+
+  // Accept host-like values from env secrets (e.g. abcdef.supabase.co) and normalize.
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  const withoutApiPath = withProtocol.replace(/\/rest\/v1\/?$/i, "");
+
+  let parsed: URL;
+  try {
+    parsed = new URL(withoutApiPath);
+  } catch {
+    throw new Error(
+      "Invalid Supabase URL. Use the project URL like https://<project-ref>.supabase.co (not a relative path).",
+    );
+  }
+
+  if (parsed.pathname && parsed.pathname !== "/") {
+    throw new Error(
+      "Invalid Supabase URL path. Use the project root URL only (for example: https://<project-ref>.supabase.co).",
+    );
+  }
+
+  return `${parsed.protocol}//${parsed.host}`;
+}
+
 export const getSupabaseClient = () => {
   if (cachedClient) {
     return cachedClient;
@@ -17,7 +45,7 @@ export const getSupabaseClient = () => {
     );
   }
 
-  cachedClient = createClient(supabaseUrl, supabasePublishableKey, {
+  cachedClient = createClient(normalizeSupabaseProjectUrl(supabaseUrl), supabasePublishableKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
