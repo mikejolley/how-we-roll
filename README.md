@@ -33,7 +33,7 @@ Run `supabase/schema.sql` in Supabase SQL editor once per project.
 2. Add your GitHub OAuth app client ID/secret in Supabase.
 3. Add callback URL from Supabase to your GitHub OAuth app settings.
 4. **Redirect URLs** in Supabase must include your app origin **without** the hash route, e.g. `http://localhost:5173/` (PKCE puts `?code=` on the origin). Do **not** use `http://localhost:5173/#/` as the only redirect.
-5. Set **Site URL** and **Redirect URLs** to the full app path, including the repo segment — e.g. `https://<user>.github.io/<repo>/` — not `https://<user>.github.io/` alone. The app sends `redirectTo` as origin plus pathname so OAuth returns to the same folder the SPA lives in.
+5. Set **Site URL** to the full app URL, e.g. `https://<user>.github.io/<repo>/` (not `https://<user>.github.io/`). Under **Redirect URLs**, add the same URL (trailing slash is fine). Production builds set `VITE_PUBLIC_BASE_PATH` from the repo name in GitHub Actions so `redirectTo` is always `https://<user>.github.io/<repo>/` even when the browser pathname is wrong. For a custom domain, set repository secret `VITE_OAUTH_REDIRECT_URL` to that origin (with path if any) and add it in Supabase.
 
 Join remains open to anyone with a room link. Creating/deleting rooms requires GitHub auth.
 

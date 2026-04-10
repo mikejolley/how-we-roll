@@ -28,6 +28,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          # Project Pages live at github.io/<repo>/; pathname alone is often "/" so OAuth must be explicit.
+          VITE_PUBLIC_BASE_PATH: ${{ github.event.repository.name }}
         run: |
           npm ci
           npm run build

@@ -1,11 +1,23 @@
 import { getSupabaseClient } from "./lib/supabase";
 
 /**
- * PKCE redirect must land on the deployed app root, including a GitHub Pages project path
- * (e.g. /how-we-roll/). `window.location.origin + "/"` is wrong there — it sends users to the
- * user-site root instead of the repo URL.
+ * PKCE redirect must land on the deployed app root, including a GitHub Pages **project** path
+ * (e.g. /how-we-roll/). `origin + "/"` is wrong — Supabase then falls back to Site URL and you
+ * end up at https://user.github.io/?code=... with no app.
+ *
+ * Priority: full URL override → build-time base path (CI sets this from the repo name) → pathname.
  */
 export function getOAuthRedirectUrl(): string {
+  const fullOverride = import.meta.env.VITE_OAUTH_REDIRECT_URL?.trim();
+  if (fullOverride) {
+    return fullOverride.endsWith("/") ? fullOverride : `${fullOverride}/`;
+  }
+
+  const baseSegment = import.meta.env.VITE_PUBLIC_BASE_PATH?.trim().replace(/^\/+|\/+$/g, "");
+  if (baseSegment) {
+    return `${window.location.origin}/${baseSegment}/`;
+  }
+
   const { origin, pathname } = window.location;
   let path = pathname.replace(/\/index\.html$/i, "");
   if (path !== "/" && !path.endsWith("/")) {
