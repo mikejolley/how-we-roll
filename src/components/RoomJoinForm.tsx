@@ -2,7 +2,6 @@ import { FormEvent, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import type { Session } from "@supabase/supabase-js";
-import randomAnimalName from "random-animal-name";
 import {
   getSupabaseClient,
   isValidRoomSlug,
@@ -14,6 +13,48 @@ import { AsciiTitle } from "./AsciiTitle";
 type RoomJoinFormProps = {
   initialSlug?: string;
 };
+
+const ROOM_ADJECTIVES = [
+  "aggressive",
+  "brave",
+  "calm",
+  "clever",
+  "curious",
+  "daring",
+  "eager",
+  "fierce",
+  "gentle",
+  "jolly",
+  "kind",
+  "lucky",
+  "mighty",
+  "nimble",
+  "playful",
+  "steady",
+  "swift",
+  "wild",
+];
+
+const ROOM_ANIMALS = [
+  "otter",
+  "fox",
+  "owl",
+  "panda",
+  "dolphin",
+  "wolf",
+  "falcon",
+  "koala",
+  "badger",
+  "beaver",
+  "tiger",
+  "lion",
+  "rabbit",
+  "gecko",
+  "whale",
+  "sparrow",
+  "cougar",
+  "lemur",
+];
 
 export function RoomJoinForm({ initialSlug = "" }: RoomJoinFormProps) {
   const navigate = useNavigate();
@@ -250,7 +291,9 @@ export function RoomJoinForm({ initialSlug = "" }: RoomJoinFormProps) {
   };
 
   const generateDescriptiveAnimalName = () => {
-    const generated = `${String(randomAnimalName()).trim().toLowerCase().replace(/\s+/g, "-")}-${makeSecretRoomSuffix(6)}`;
+    const adjective = ROOM_ADJECTIVES[Math.floor(Math.random() * ROOM_ADJECTIVES.length)];
+    const animal = ROOM_ANIMALS[Math.floor(Math.random() * ROOM_ANIMALS.length)];
+    const generated = `${adjective}-${animal}-${makeSecretRoomSuffix(6)}`;
     setRoomSlug(normalizeRoomSlug(generated));
   };
 
