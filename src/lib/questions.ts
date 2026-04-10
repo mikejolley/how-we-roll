@@ -63,12 +63,28 @@ export const QUESTIONS: SpectrumQuestion[] = [
     rightLabel: "Give me all the context",
   },
   {
+    id: "feedback-style",
+    section: "how-we-roll",
+    headingEmoji: "💬",
+    title: "Feedback Style",
+    leftLabel: "Give it to me bluntly",
+    rightLabel: "Ease me into it",
+  },
+  {
     id: "ship-vs-production",
     section: "how-we-roll",
     headingEmoji: "🚀",
     title: "Experimentation",
     leftLabel: "Not perfect enough to ship",
     rightLabel: "Let's try it in production!",
+  },
+  {
+    id: "ai-vs-manual",
+    section: "how-we-roll",
+    headingEmoji: "🤖",
+    title: "AI Assistance",
+    leftLabel: "Let AI do everything",
+    rightLabel: "Keep me hands-on",
   },
   {
     id: "public-private-recognition",
@@ -141,6 +157,14 @@ export const QUESTIONS: SpectrumQuestion[] = [
     title: "Companion Pick",
     leftLabel: "Mythical Creatures",
     rightLabel: "Robot Companions",
+  },
+  {
+    id: "pet-preference",
+    section: "extra-spectrums",
+    headingEmoji: "🐾",
+    title: "Pet Preference",
+    leftLabel: "Cats",
+    rightLabel: "Dogs",
   },
 ];
 
