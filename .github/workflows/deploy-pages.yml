@@ -16,6 +16,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Same environment as deploy so **environment** secrets (e.g. under github-pages) are visible
+    # during `npm run build`. Repository secrets are also available here.
+    environment:
+      name: github-pages
     steps:
       - uses: actions/checkout@v4
 
@@ -23,6 +27,16 @@ jobs:
         with:
           node-version: "22"
           cache: npm
+
+      - name: Require Supabase env for Vite build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "${VITE_SUPABASE_URL}" ] || [ -z "${VITE_SUPABASE_PUBLISHABLE_KEY}" ]; then
+            echo "::error::VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY must be set for the build (repository Actions secrets and/or github-pages environment secrets). Empty values produce a broken site."
+            exit 1
+          fi
 
       - name: Install and build
         env:

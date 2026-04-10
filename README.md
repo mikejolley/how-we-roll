@@ -48,10 +48,10 @@ This app uses `HashRouter`, so routes work on static hosting without rewrite rul
 ### Automated deploy (recommended)
 
 1. In the GitHub repo, go to **Settings → Pages** and set **Source** to **GitHub Actions**.
-2. Under **Settings → Secrets and variables → Actions**, add repository secrets (optional but required for a working app in production):
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_PUBLISHABLE_KEY`  
-   These are the same names as in `.env.local`. If they are missing, the site still builds but shows the Supabase setup message until you add them and re-run the workflow.
+2. Add **`VITE_SUPABASE_URL`** and **`VITE_SUPABASE_PUBLISHABLE_KEY`** where the **build** job can read them:
+   - **Recommended:** **Settings → Secrets and variables → Actions** → **Repository secrets** (available to every workflow job).
+   - Or define the same names on the **`github-pages` environment**; the deploy workflow’s build job uses that environment so those values are injected at `npm run build` time.  
+   Vite embeds these at build time — if they are empty, the live site will show “Supabase setup required”. The workflow fails the build if both are missing, so you do not ship a broken bundle by accident.
 3. Push to `main`; `.github/workflows/deploy-pages.yml` builds `dist/` and publishes it.
 
 ### Manual build

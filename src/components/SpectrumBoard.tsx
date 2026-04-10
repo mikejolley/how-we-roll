@@ -467,8 +467,19 @@ export function SpectrumBoard({ roomSlug }: SpectrumBoardProps) {
         <section className="card">
           <h1>Supabase setup required</h1>
           <p className="muted">
-            Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> to
-            <code> .env.local</code>, then reload.
+            {import.meta.env.PROD ? (
+              <>
+                This build was produced without Supabase env vars. Add repository secrets{" "}
+                <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> (GitHub
+                Actions → build step), or set them on the <code>github-pages</code> environment, then
+                re-run the deploy workflow.
+              </>
+            ) : (
+              <>
+                Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> to{" "}
+                <code>.env.local</code>, then reload.
+              </>
+            )}
           </p>
         </section>
       </main>

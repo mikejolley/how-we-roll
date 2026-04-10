@@ -311,8 +311,20 @@ export function RoomJoinForm({ initialSlug = "" }: RoomJoinFormProps) {
       ) : null}
       {supabaseUnavailable ? (
         <p className="tiny warning">
-          Supabase setup missing. Add <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code>{" "}
-          in <code>.env.local</code>, then restart <code>npm run dev</code>.
+          {import.meta.env.PROD ? (
+            <>
+              Supabase env missing in this deployment. Configure{" "}
+              <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> for the
+              GitHub Actions build (repository or <code>github-pages</code> environment secrets) and
+              redeploy.
+            </>
+          ) : (
+            <>
+              Supabase setup missing. Add <code>VITE_SUPABASE_URL</code> and{" "}
+              <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> in <code>.env.local</code>, then restart{" "}
+              <code>npm run dev</code>.
+            </>
+          )}
         </p>
       ) : null}
       <label className="fieldLabel" htmlFor="roomSlug">
